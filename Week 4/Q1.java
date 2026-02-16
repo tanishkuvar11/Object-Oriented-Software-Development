@@ -40,7 +40,7 @@ class Hotel {
     }
 }
 
-class Customer implements Runnable {
+class Customer extends Thread {
 
     private final Hotel hotel;
     private final String customerName;
@@ -80,7 +80,7 @@ public class Q1 {
         Hotel hotel = new Hotel(rooms);
 
         for (int i = 1; i <= customers; i++) {
-            Thread t = new Thread(new Customer(hotel, "Customer " + i));
+            Customer t = new Customer(hotel, "Customer " + i);
             t.start();
         }
 
