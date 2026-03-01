@@ -1,198 +1,149 @@
 import java.io.*;
-import java.util.*;
+import java.util.Scanner;
 
 public class Q2 {
 
-    private static final String FILE_NAME = "rooms.ser";
+    static final String FILE = "rooms.ser";
 
-    public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
+    static class Room implements Serializable {
+        int number;
+        String type;
+        double price;
+        boolean bookingStatus;
+        String guest;
 
+        Room(int n, String t, double p, boolean b, String g) {
+            number = n;
+            type = t;
+            price = p;
+            bookingStatus = b;
+            guest = b ? g : null;
+        }
+
+        public String toString() {
+            return "\nRoom No: " + number +
+                    "\nType: " + type +
+                    "\nPrice: " + price +
+                    "\nBooked: " + bookingStatus +
+                    (bookingStatus ? "\nGuest: " + guest : "") +
+                    "\n----------------";
+        }
+    }
+
+    static void addRoom(Room r) throws Exception {
+        ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(FILE, true));
+        out.writeObject(r);
+        out.close();
+    }
+
+    static void display() throws Exception {
+        ObjectInputStream in = new ObjectInputStream(new FileInputStream(FILE));
         while (true) {
-            System.out.println("\n1. Add Room");
-            System.out.println("2. Display All Rooms");
-            System.out.println("3. Search Room by Number");
-            System.out.println("4. Update Booking Status");
-            System.out.println("5. Exit");
-            System.out.print("Choice: ");
-
-            int choice = sc.nextInt();
-            sc.nextLine();
-
-            switch (choice) {
-                case 1:
-                    addRoom(sc);
-                    break;
-                case 2:
-                    displayAllRooms();
-                    break;
-                case 3:
-                    searchRoom(sc);
-                    break;
-                case 4:
-                    updateRoom(sc);
-                    break;
-                case 5:
-                    sc.close();
-                    return;
-                default:
-                    System.out.println("Invalid choice.");
-            }
-        }
-    }
-
-    private static List<Room> readRooms() {
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(FILE_NAME))) {
-
-            return (List<Room>) ois.readObject();
-
-        } catch (FileNotFoundException e) {
-            return new ArrayList<>();
-        } catch (IOException | ClassNotFoundException e) {
-            System.out.println("Error reading file: " + e.getMessage());
-            return new ArrayList<>();
-        }
-    }
-
-    private static void writeRooms(List<Room> rooms) {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(FILE_NAME))) {
-
-            oos.writeObject(rooms);
-
-        } catch (IOException e) {
-            System.out.println("Error writing file: " + e.getMessage());
-        }
-    }
-
-    private static void addRoom(Scanner sc) {
-        List<Room> rooms = readRooms();
-
-        System.out.print("Room Number: ");
-        int number = sc.nextInt();
-        sc.nextLine();
-
-        System.out.print("Room Type: ");
-        String type = sc.nextLine();
-
-        System.out.print("Price Per Night: ");
-        double price = sc.nextDouble();
-        sc.nextLine();
-
-        System.out.print("Is Booked (true/false): ");
-        boolean booked = sc.nextBoolean();
-        sc.nextLine();
-
-        String guest = "";
-        if (booked) {
-            System.out.print("Guest Name: ");
-            guest = sc.nextLine();
-        }
-
-        rooms.add(new Room(number, type, price, booked, guest));
-        writeRooms(rooms);
-
-        System.out.println("Room added successfully.");
-    }
-
-    private static void displayAllRooms() {
-        List<Room> rooms = readRooms();
-
-        if (rooms.isEmpty()) {
-            System.out.println("No rooms available.");
-            return;
-        }
-
-        for (Room r : rooms) {
+            Room r = (Room) in.readObject();
             System.out.println(r);
         }
     }
 
-    private static void searchRoom(Scanner sc) {
-        List<Room> rooms = readRooms();
-
-        System.out.print("Enter Room Number: ");
-        int number = sc.nextInt();
-
-        for (Room r : rooms) {
-            if (r.getRoomNumber() == number) {
+    static void search(int num) throws Exception {
+        ObjectInputStream in = new ObjectInputStream(new FileInputStream(FILE));
+        while (true) {
+            Room r = (Room) in.readObject();
+            if (r.number == num) {
                 System.out.println(r);
                 return;
             }
         }
-
-        System.out.println("Room not found.");
     }
 
-    private static void updateRoom(Scanner sc) {
-        List<Room> rooms = readRooms();
+    static void update(int num, boolean status, String guest) throws Exception {
+        ObjectInputStream in = new ObjectInputStream(new FileInputStream(FILE));
+        ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("temp.ser"));
 
-        System.out.print("Enter Room Number: ");
-        int number = sc.nextInt();
-        sc.nextLine();
+        while (true) {
+            Room r = (Room) in.readObject();
+            if (r.number == num) {
+                r.bookingStatus = status;
+                r.guest = status ? guest : null;
+            }
+            out.writeObject(r);
+        }
+    }
 
-        for (Room r : rooms) {
-            if (r.getRoomNumber() == number) {
+    public static void main(String[] args) throws Exception {
 
-                System.out.print("New Booking Status (true/false): ");
-                boolean status = sc.nextBoolean();
+        Scanner sc = new Scanner(System.in);
+
+        while (true) {
+            System.out.println("\n1.Add  2.Display  3.Search  4.Update  5.Exit");
+            int ch = sc.nextInt();
+
+            if (ch == 1) {
+                System.out.print("Number: ");
+                int n = sc.nextInt();
                 sc.nextLine();
 
-                r.setBooked(status);
+                System.out.print("Type: ");
+                String t = sc.nextLine();
 
-                if (status) {
-                    System.out.print("Guest Name: ");
-                    r.setGuestName(sc.nextLine());
-                } else {
-                    r.setGuestName("");
+                System.out.print("Price: ");
+                double p = sc.nextDouble();
+                sc.nextLine();
+
+                System.out.print("Booked (true/false): ");
+                boolean b = sc.nextBoolean();
+                sc.nextLine();
+
+                String g = null;
+                if (b) {
+                    System.out.print("Guest: ");
+                    g = sc.nextLine();
                 }
 
-                writeRooms(rooms);
-                System.out.println("Room updated successfully.");
-                return;
+                addRoom(new Room(n, t, p, b, g));
             }
-        }
 
-        System.out.println("Room not found.");
-    }
+            else if (ch == 2) {
+                try {
+                    display();
+                } catch (EOFException e) {
+                }
+            }
 
-    static class Room implements Serializable {
+            else if (ch == 3) {
+                System.out.print("Room number: ");
+                int n = sc.nextInt();
+                try {
+                    search(n);
+                } catch (EOFException e) {
+                    System.out.println("Not found");
+                }
+            }
 
-        private static final long serialVersionUID = 1L;
+            else if (ch == 4) {
+                System.out.print("Room number: ");
+                int n = sc.nextInt();
+                sc.nextLine();
 
-        private int roomNumber;
-        private String roomType;
-        private double pricePerNight;
-        private boolean isBooked;
-        private String guestName;
+                System.out.print("Booked (true/false): ");
+                boolean b = sc.nextBoolean();
+                sc.nextLine();
 
-        public Room(int roomNumber, String roomType, double pricePerNight,
-                boolean isBooked, String guestName) {
-            this.roomNumber = roomNumber;
-            this.roomType = roomType;
-            this.pricePerNight = pricePerNight;
-            this.isBooked = isBooked;
-            this.guestName = guestName;
-        }
+                String g = null;
+                if (b) {
+                    System.out.print("Guest: ");
+                    g = sc.nextLine();
+                }
 
-        public int getRoomNumber() {
-            return roomNumber;
-        }
+                try {
+                    update(n, b, g);
+                } catch (EOFException e) {
+                    new File(FILE).delete();
+                    new File("temp.ser").renameTo(new File(FILE));
+                }
+            }
 
-        public void setBooked(boolean booked) {
-            isBooked = booked;
-        }
-
-        public void setGuestName(String guestName) {
-            this.guestName = guestName;
-        }
-
-        @Override
-        public String toString() {
-            return "Room Number: " + roomNumber +
-                    "\nRoom Type: " + roomType +
-                    "\nPrice Per Night: " + pricePerNight +
-                    "\nBooked: " + isBooked +
-                    "\nGuest Name: " + guestName + "\n";
+            else
+                break;
         }
     }
 }
